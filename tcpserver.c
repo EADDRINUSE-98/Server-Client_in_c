@@ -3,28 +3,41 @@
 #include<unistd.h> // close(),
 #include<string.h> // strerror(), memset()
 #include<errno.h> // errno,
-#include<sys/socket.h> // AF_UNSPEC, AI_PASSIVE, SOCK_STREAM, SOL_SOCKET, SO_REUSEADDR, EXIT_FAILURE, EXIT_SUCCESS, getaddrinfo(), gai_strerror(), socket(), setsockopt(), bind(), freeaddrinfo(), listen(),
-#include<sys/types.h> // getaddrinfo(), gai_strerror(), socket(), setsockopt(), bind(), freeaddrinfo(), listen(),
+#include<sys/socket.h> // AF_UNSPEC, AI_PASSIVE, SOCK_STREAM, SOL_SOCKET, SO_REUSEADDR, EXIT_FAILURE, EXIT_SUCCESS, getaddrinfo(), gai_strerror(), socket(), setsockopt(), bind(), freeaddrinfo(), listen(), accept(),
+#include<sys/types.h> // getaddrinfo(), gai_strerror(), socket(), setsockopt(), bind(), freeaddrinfo(), listen(), accept(), waitpid(), 
 #include<netdb.h> // getaddrinfo(), gai_strerror(), freeaddrinfo(),
-#include<arpa/inet.h>
+#include<arpa/inet.h> // INET6_ADDRSTRLEN, 
 #include<netinet/in.h>
+#include<sys/wait.h> // waitpid(), 
+#include<signal.h> // 
 
 #define BACKLOG 5
 #define SERVPORT "6789"
 
 void signal_handler_func(int signum){
 	int saved_errno = errno;
-	while((waitpid(-1, NULL, WOHANG)) > 0);
+	while((waitpid(-1, NULL, WNOHANG)) > 0);
 	errno = saved_errno;
+}
+
+void *get_inet_addr(struct sockaddr *sa_i){
+	if((sa_i->sa_family) == AF_INET){
+		return &(((struct sockaddr_in *)sa_i)->sin_addr);
+	}
+	return &(((struct sockaddr_in6 *)sa_i)->sin6_addr);
 }
 
 int main(){
 	int sockfd;
+	int conn_sockfd;
 	int status;
 	struct addrinfo hints, *servinfo, *p;
 	int numbytes;
 	int yes = 1;
 	struct sigaction sa;
+	struct sockaddr_storage client_addr;
+	socklen_t client_addrlen;
+	char *str_client_addr[INET6_ADDRSTRLEN];
 
 	memset(&hints, 0, sizeof(hints));
 	hints.ai_family = AF_UNSPEC;
@@ -32,7 +45,7 @@ int main(){
 	hints.ai_socktype = SOCK_STREAM;
 
 	if((status = getaddrinfo(NULL, SERVPORT, &hints, &servinfo)) != 0){
-		fprintf(strerr, "getaddinfo: %s\n", gai_strerror(status));
+		fprintf(stderr, "getaddinfo: %s\n", gai_strerror(status));
 		exit(EXIT_FAILURE);
 	}
 
@@ -43,7 +56,6 @@ int main(){
 		}
 		if((setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(int))) != 0){
 			perror("server: setsockopt\n");
-			fprintf(strerr, "error msg: %s\n", strerror(errno));
 			exit(EXIT_FAILURE);
 		}
 		if((bind(sockfd, p->ai_addr, p->ai_addrlen)) != 0){
@@ -57,14 +69,13 @@ int main(){
 	freeaddrinfo(servinfo);
 
 	if(p == NULL){
-		fprintf(strerr, "server: failed to bind\n");
-		fprintf(strerr, "error msg: %s\n", strerror(errno));
+		fprintf(stderr, "server: failed to bind\n");
+		fprintf(stderr, "error msg: %s\n", strerror(errno));
 		exit(EXIT_FAILURE);
 	}
 
 	if((listen(sockfd, BACKLOG)) != 0){
 		perror("server: listen\n");
-		fprintf(strerr, "error msg: %s\n", strerror(errno));
 		close(sockfd);
 		exit(EXIT_FAILURE);
 	}
@@ -74,7 +85,25 @@ int main(){
 	sa.sa_flags = SA_RESTART;
 	if((sigaction(SIGCHLD, &sa, NULL)) != 0){
 		perror("server: sigaction\n");
-		fprintf(strerr, "error msg: %s\n", strerror(errno));
 		exit(EXIT_FAILURE);
 	}
+
+	printf("server: waiting for connections...\n");
+
+	client_addrlen = sizeof(client_addr);
+
+	while(1){
+		if((conn_sockfd = accept(sockfd, (struct sockaddr *)&client_addr, &client_addrlen)) == -1){
+			perror("server: accept\n");
+			continue;
+		}
+
+		inet_ntop(client_addr.ss_family, get_inet_addr((struct sockaddr *)&client_addr), &str_client_addr, sizeof(str_client_addr));
+
+		printf("server: Got connection from %s\n", &str_client_addr);
+
+		close(conn_sockfd);
+	}
+	close(sockfd);
+	exit(EXIT_SUCCESS);
 }
