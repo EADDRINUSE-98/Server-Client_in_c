@@ -3,8 +3,8 @@
 #include<unistd.h> // close(),
 #include<string.h> // strerror(), memset()
 #include<errno.h> // errno,
-#include<sys/socket.h> // AF_UNSPEC, AI_PASSIVE, SOCK_STREAM, SOL_SOCKET, SO_REUSEADDR, EXIT_FAILURE, EXIT_SUCCESS, getaddrinfo(), gai_strerror(), socket(), setsockopt(), bind(), freeaddrinfo(), listen(), accept(),
-#include<sys/types.h> // getaddrinfo(), gai_strerror(), socket(), setsockopt(), bind(), freeaddrinfo(), listen(), accept(), waitpid(), 
+#include<sys/socket.h> // AF_UNSPEC, AI_PASSIVE, SOCK_STREAM, SOL_SOCKET, SO_REUSEADDR, EXIT_FAILURE, EXIT_SUCCESS, getaddrinfo(), gai_strerror(), socket(), setsockopt(), bind(), freeaddrinfo(), listen(), accept(), send(), recv(),
+#include<sys/types.h> // getaddrinfo(), gai_strerror(), socket(), setsockopt(), bind(), freeaddrinfo(), listen(), accept(), waitpid(), fork(), send(), recv(),
 #include<netdb.h> // getaddrinfo(), gai_strerror(), freeaddrinfo(),
 #include<arpa/inet.h> // INET6_ADDRSTRLEN, 
 #include<netinet/in.h>
@@ -38,6 +38,9 @@ int main(){
 	struct sockaddr_storage client_addr;
 	socklen_t client_addrlen;
 	char *str_client_addr[INET6_ADDRSTRLEN];
+	int is_chld_proc;
+	char *buf;
+	int byte_sent;
 
 	memset(&hints, 0, sizeof(hints));
 	hints.ai_family = AF_UNSPEC;
@@ -101,6 +104,24 @@ int main(){
 		inet_ntop(client_addr.ss_family, get_inet_addr((struct sockaddr *)&client_addr), &str_client_addr, sizeof(str_client_addr));
 
 		printf("server: Got connection from %s\n", &str_client_addr);
+
+		is_chld_proc = !fork();
+		if(is_chld_proc){
+			close(sockfd);
+			
+			byte_sent = send(conn_sockfd, "Hello client, send a msg of less than 200 bytes!\n", 49, 0);
+			if(byte_sent == -1){
+				perror("server: send\n");
+			}
+
+			if((recv(conn_sockfd, &buf, 200, 0)) == -1){
+				perror("server: recv\n");
+			}
+
+			close(conn_sockfd);
+			printf("client msg: %s\n", buf);
+			exit(EXIT_SUCCESS);
+		}
 
 		close(conn_sockfd);
 	}
