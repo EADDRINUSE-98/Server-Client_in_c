@@ -32,11 +32,11 @@ Now execute the binary named `tcpclient` with a **hostname**/**IP address** (or 
 ___
 # Proof of Code
 ## tcpserver
-![[tcpserver.png]]
+![tcpserver.png](https://github.com/EADDRINUSE-98/Server-Client_in_c/blob/main/poc_ss/tcpserver.png)
 ## tcpclient
-![[tcpclient.png]]
+![tcpclient.png](https://github.com/EADDRINUSE-98/Server-Client_in_c/blob/main/poc_ss/tcpclient.png)
 ## Wireshark packet capture
-![[wireshark-capture.png]]
+![wireshark-capture.png](https://github.com/EADDRINUSE-98/Server-Client_in_c/blob/main/poc_ss/wireshark-capture.png)
 ___
 # Limitations and Considerations
 - This work is only for educational purpose and nobody is encouraged to use this work for any confidential communication since there is no network encryption mechanism implemented.
