@@ -20,10 +20,26 @@ Now execute the executable binary named `tcpserver` with following command:
 > **Warning:** To execute `tcpserver` with above mentioned command correctly, the executable file must be in the current working directory.
 
 ## Running `tcpclient.c`
-Work in progress =)
+To run `tcpclient.c`, we must it the same way as we did `tcpserver.c`:
+```
+gcc tcpclient.c -o tcpclient
+```
+
+Now execute the binary named `tcpclient` with a **hostname**/**IP address** (or 127.0.0.1) of target server as an argument, like this:
+```
+./tcpclient 127.0.0.1
+```
+___
+# Proof of Code
+## tcpserver
+![[tcpserver.png]]
+## tcpclient
+![[tcpclient.png]]
+## Wireshark packet capture
+![[wireshark-capture.png]]
 ___
 # Limitations and Considerations
 - This work is only for educational purpose and nobody is encouraged to use this work for any confidential communication since there is no network encryption mechanism implemented.
-- This code base was written in a linux environment. Therefore, some c libraries used in this project can only be accessed in unix-like system environment. For e.g. `unistd.h`, `sys/socket.h`, `sys/types.h`, `signal.h`, etc, can properly used in unix-like system envirnoment.
+- This code base was written in a linux environment. Therefore, some c libraries used in this project can only be accessed in unix-like system environment. For e.g. `unistd.h`, `sys/socket.h`, `sys/types.h`, `signal.h`, etc, can properly used in unix-like system environment.
 - Since this project is for just goofing around, anybody can clone it and fork it as per their needs.
 - If any user who wants to understand what each of the functions and libraries do, they can either use `man` command to view the manual pages of each function, or use [Beej's Guide to Network Programming](https://beej.us/guide/bgnet/html/split-wide/) for better understanding of socket programming in c language.
