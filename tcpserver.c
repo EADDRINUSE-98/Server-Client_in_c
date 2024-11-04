@@ -102,9 +102,9 @@ int main(){
 			continue;
 		}
 
-		inet_ntop(client_addr.ss_family, get_inet_addr((struct sockaddr *)&client_addr), &str_client_addr, sizeof(str_client_addr));
+		inet_ntop(client_addr.ss_family, get_inet_addr((struct sockaddr *)&client_addr), *str_client_addr, sizeof(*str_client_addr));
 
-		printf("server: Got connection from %s\n", &str_client_addr);
+		printf("server: Got connection from %s\n", *str_client_addr);
 
 		is_chld_proc = !fork();
 		if(is_chld_proc){
